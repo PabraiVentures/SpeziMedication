@@ -16,3 +16,20 @@ public protocol Dosage: Codable, Hashable {
 /// Localized description of the dosage.
     var localizedDescription: String { get }
 }
+
+
+/// Enum-style dosage, where one option is selected from a list.
+public protocol EnumDosage: Dosage {}
+
+
+/// Quantity-style dosage, where each dosage unit has an editable numeric value.
+public protocol QuantityDosage: Dosage {
+    /// Numeric value of the dosage.
+    var dosageValue: Double { get set }
+    /// Unit label of the dosage (e.g., mg, mg/mL).
+    var dosageUnit: String { get set }
+}
+
+
+/// Backward-compatible alias for quantity-based dosage workflows.
+public typealias EditableDosage = QuantityDosage

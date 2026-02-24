@@ -14,8 +14,9 @@ class InternalMedicationSettingsViewModel<MI: MedicationInstance> {
     var medicationInstances: [MI]
     let medicationOptions: Set<MI.InstanceType>
     let createMedicationInstance: AddMedication<MI>.CreateMedicationInstance
-    
-    
+    private var quantityDosageCache: [AnyHashable: [Int: Double]] = [:]
+
+
     init(
         medicationInstances: Set<MI>,
         medicationOptions: Set<MI.InstanceType>,
@@ -26,9 +27,23 @@ class InternalMedicationSettingsViewModel<MI: MedicationInstance> {
         self.createMedicationInstance = createMedicationInstance
     }
 
-    
+
     func duplicateOf(medication: MI.InstanceType, dosage: MI.InstanceDosage) -> Bool {
         medicationInstances.contains(where: { $0.type == medication && $0.dosage == dosage })
+    }
+
+    func quantityDosageValues(for medicationID: AnyHashable) -> [Int: Double]? {
+        quantityDosageCache[medicationID]
+    }
+
+    func setQuantityDosageValue(_ value: Double, at index: Int, for medicationID: AnyHashable) {
+        var values = quantityDosageCache[medicationID] ?? [:]
+        values[index] = value
+        quantityDosageCache[medicationID] = values
+    }
+
+    func clearQuantityDosageValues(for medicationID: AnyHashable) {
+        quantityDosageCache.removeValue(forKey: medicationID)
     }
 }
 
@@ -40,7 +55,7 @@ extension MedicationSettingsViewModel {
             guard Medications.self is Observation.Observable.Type else {
                 preconditionFailure("If \(String(describing: Medications.self)) is a class type, it must conform to `Observable` using the `@Observable` macro.")
             }
-            
+
             // If the medication instances are classes we need to make copies of them to ensure that we don't modify the original instances before the user presses save.
             medicationInstances = Set(
                 self.medicationInstances.map { medicationInstance in
@@ -54,7 +69,7 @@ extension MedicationSettingsViewModel {
         } else {
             medicationInstances = self.medicationInstances
         }
-        
+
         return InternalMedicationSettingsViewModel(
             medicationInstances: medicationInstances,
             medicationOptions: medicationOptions,

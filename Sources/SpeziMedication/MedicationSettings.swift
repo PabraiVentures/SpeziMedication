@@ -111,10 +111,24 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
             action: {
                 do {
                     viewState = .processing
-                    try await medicationSettingsViewModel.persist(medicationInstances: Set(viewModel.medicationInstances))
+
+                    let preparedMedicationInstances: [MI] = viewModel.medicationInstances.map { medicationInstance in
+                        var mutableMedicationInstance = medicationInstance
+                        if let valuesByIndex = viewModel.quantityDosageValues(for: AnyHashable(medicationInstance.id)),
+                           var writableMedicationInstance = mutableMedicationInstance as? any QuantityDosageValuesWritable {
+                            writableMedicationInstance.setQuantityDosageValues(valuesByIndex)
+                            if let typedMedicationInstance = writableMedicationInstance as? MI {
+                                mutableMedicationInstance = typedMedicationInstance
+                            }
+                        }
+                        return mutableMedicationInstance
+                    }
+
+                    let preparedMedicationSet = Set(preparedMedicationInstances)
+                    try await medicationSettingsViewModel.persist(medicationInstances: preparedMedicationSet)
                     viewModel.medicationInstances = medicationSettingsViewModel.medicationInstances.sorted()
                     action()
-isPresented?.wrappedValue = false
+                    isPresented?.wrappedValue = false
                     viewState = .idle
                 } catch let error as LocalizedError {
                     viewState = .error(error)

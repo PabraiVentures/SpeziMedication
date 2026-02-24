@@ -13,15 +13,20 @@ import SwiftUI
 struct EditMedication<MI: MedicationInstance>: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(InternalMedicationSettingsViewModel<MI>.self) private var viewModel
-    
+
     @Binding private var medicationInstance: MI
-    
-    
+
+
     var body: some View {
         VStack {
             Form {
                 Section(String(localized: "Dosage", bundle: .module)) {
-                    EditDosage<MI>(dosage: $medicationInstance.dosage, medication: medicationInstance.type, initialDosage: medicationInstance.dosage)
+                    EditDosage<MI>(
+                        dosage: $medicationInstance.dosage,
+                        medication: medicationInstance.type,
+                        medicationInstanceID: AnyHashable(medicationInstance.id),
+                        initialDosage: medicationInstance.dosage
+                    )
                         .labelsHidden()
                 }
                 Section(String(localized: "Schedule", bundle: .module)) {
@@ -34,6 +39,7 @@ struct EditMedication<MI: MedicationInstance>: View {
                     Button(String(localized: "Delete", bundle: .module), role: .destructive) {
                         let id = medicationInstance.id
                         viewModel.medicationInstances.removeAll(where: { $0.id == id })
+                        viewModel.clearQuantityDosageValues(for: AnyHashable(id))
                         dismiss()
                     }
                 }
@@ -41,8 +47,8 @@ struct EditMedication<MI: MedicationInstance>: View {
         }
             .navigationTitle(medicationInstance.localizedDescription)
     }
-    
-    
+
+
     init(medicationInstance: Binding<MI>) {
         self._medicationInstance = medicationInstance
     }
