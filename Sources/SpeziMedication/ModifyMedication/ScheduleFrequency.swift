@@ -11,15 +11,17 @@ import SwiftUI
 
 struct ScheduleFrequencyView: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     @Binding private var outsideFrequency: Frequency
     @Binding private var startDate: Date
-    
+    @Binding private var endDate: Date?
+    private let supportsEndDate: Bool
+
     @State private var frequency: Frequency
     @State private var regularInterval: Int = 1
     @State private var daysOfTheWeek: Weekdays = .all
-    
-    
+
+
     var body: some View {
         NavigationStack {
             Form {
@@ -43,6 +45,9 @@ struct ScheduleFrequencyView: View {
                 }
                 Section {
                     startDateSection
+                    if supportsEndDate {
+                        endDateControls
+                    }
                 }
             }
             .toolbar {
@@ -50,7 +55,7 @@ struct ScheduleFrequencyView: View {
             }
         }
     }
-    
+
     @ViewBuilder private var regularDayIntervalsSection: some View {
         Section(String(localized: "Choose Interval", bundle: .module)) {
             Picker("Every", selection: $regularInterval) {
@@ -65,7 +70,7 @@ struct ScheduleFrequencyView: View {
                 }
         }
     }
-    
+
     @ViewBuilder private var specificDaysOfWeekSection: some View {
         Section(String(localized: "Choose Days", bundle: .module)) {
             ForEach(Weekdays.allCases) { weekday in
@@ -89,17 +94,60 @@ struct ScheduleFrequencyView: View {
             }
         }
     }
-    
+
     @ViewBuilder private var startDateSection: some View {
-        DatePicker(
-            selection: $startDate,
-            in: Date.distantPast...Date.now,
-            displayedComponents: .date
-        ) {
+        HStack {
             Text("Start Date", bundle: .module)
+            Spacer()
+            DatePicker(
+                "",
+                selection: $startDate,
+                in: Date.distantPast...Date.now,
+                displayedComponents: .date
+            )
+                .labelsHidden()
         }
+        .frame(minHeight: 56)
+            .onChange(of: startDate) {
+                guard let currentEndDate = endDate, currentEndDate < startDate else {
+                    return
+                }
+                endDate = startDate
+            }
     }
-    
+
+    @ViewBuilder private var endDateControls: some View {
+        Group {
+            if endDate != nil {
+                HStack {
+                    Text("End Date")
+                    Spacer()
+                    DatePicker(
+                        "",
+                        selection: endDateSelection,
+                        in: startDate...Date.distantFuture,
+                        displayedComponents: .date
+                    )
+                        .labelsHidden()
+                }
+                .frame(minHeight: 56)
+
+                Button("Remove End Date", role: .destructive) {
+                    withAnimation {
+                        endDate = nil
+                    }
+                }
+            } else {
+                Button("Add End Date") {
+                    withAnimation {
+                        endDate = Calendar.current.date(byAdding: .month, value: 1, to: startDate) ?? startDate
+                    }
+                }
+            }
+        }
+        .id(endDate != nil)
+    }
+
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button(String(localized: "Cancel", bundle: .module)) {
@@ -114,13 +162,20 @@ struct ScheduleFrequencyView: View {
                 .bold()
         }
     }
-    
-    
-    init(frequency: Binding<Frequency>, startDate: Binding<Date>) {
+
+
+    init(
+        frequency: Binding<Frequency>,
+        startDate: Binding<Date>,
+        endDate: Binding<Date?>,
+        supportsEndDate: Bool
+    ) {
         self._outsideFrequency = frequency
         self._startDate = startDate
+        self._endDate = endDate
+        self.supportsEndDate = supportsEndDate
         self._frequency = State(wrappedValue: frequency.wrappedValue)
-        
+
         switch frequency.wrappedValue {
         case let .specificDaysOfWeek(daysOfTheWeek):
             self._daysOfTheWeek = State(wrappedValue: daysOfTheWeek)
@@ -130,18 +185,29 @@ struct ScheduleFrequencyView: View {
             break
         }
     }
-    
-    
+
+
+    private var endDateSelection: Binding<Date> {
+        Binding(
+            get: {
+                endDate ?? startDate
+            },
+            set: { newValue in
+                endDate = newValue
+            }
+        )
+    }
+
     private func insert(dayOfTheWeek: Weekdays) {
         daysOfTheWeek.subtract(dayOfTheWeek)
         updateSchedule()
     }
-    
+
     private func remove(dayOfTheWeek: Weekdays) {
         daysOfTheWeek.insert(dayOfTheWeek)
         updateSchedule()
     }
-    
+
     private func updateSchedule() {
         switch frequency {
         case .regularDayIntervals:
@@ -157,6 +223,12 @@ struct ScheduleFrequencyView: View {
 #Preview {
     @Previewable @State var frequency: Frequency = .specificDaysOfWeek(.all)
     @Previewable @State var startDate: Date = .now
-    
-    return ScheduleFrequencyView(frequency: $frequency, startDate: $startDate)
+    @Previewable @State var endDate: Date? = .now
+
+    return ScheduleFrequencyView(
+        frequency: $frequency,
+        startDate: $startDate,
+        endDate: $endDate,
+        supportsEndDate: true
+    )
 }

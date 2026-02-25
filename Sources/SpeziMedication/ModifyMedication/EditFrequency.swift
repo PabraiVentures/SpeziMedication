@@ -12,9 +12,11 @@ import SwiftUI
 struct EditFrequency: View {
     @Binding private var frequency: Frequency
     @Binding private var startDate: Date
+    @Binding private var endDate: Date?
+    private let supportsEndDate: Bool
     @State private var showFrequencySheet = false
-    
-    
+
+
     var body: some View {
         Section {
             Button(
@@ -33,13 +35,25 @@ struct EditFrequency: View {
             )
         }
             .sheet(isPresented: $showFrequencySheet) {
-                ScheduleFrequencyView(frequency: $frequency, startDate: $startDate)
+                ScheduleFrequencyView(
+                    frequency: $frequency,
+                    startDate: $startDate,
+                    endDate: $endDate,
+                    supportsEndDate: supportsEndDate
+                )
             }
     }
-    
-    
-    init(frequency: Binding<Frequency>, startDate: Binding<Date>) {
+
+
+    init(frequency: Binding<Frequency>, startDate: Binding<Date>, endDate: Binding<Date?>? = nil) {
         self._frequency = frequency
         self._startDate = startDate
+        if let endDate {
+            self._endDate = endDate
+            self.supportsEndDate = true
+        } else {
+            self._endDate = .constant(nil)
+            self.supportsEndDate = false
+        }
     }
 }

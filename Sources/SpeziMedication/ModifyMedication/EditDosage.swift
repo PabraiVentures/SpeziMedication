@@ -46,7 +46,7 @@ struct EditDosage<MI: MedicationInstance>: View {
         Picker(String(localized: "Dosage: \(medication.localizedDescription)", bundle: .module), selection: $dosage) {
             ForEach(medication.dosages, id: \.self) { dosage in
                 if viewModel.duplicateOf(medication: medication, dosage: dosage) && initialDosage != dosage {
-                    HStack {
+                    HStack(spacing: 6) {
                         VStack(alignment: .leading) {
                             Text(dosage.localizedDescription)
                             Text("Medication with this dosage already exists.", bundle: .module)
@@ -85,7 +85,7 @@ struct EditDosage<MI: MedicationInstance>: View {
                 )
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.leading)
-                .frame(width: 56, alignment: .leading)
+                .frame(width: 44, alignment: .leading)
 
                 Text(editableUnitLabel(for: option))
 

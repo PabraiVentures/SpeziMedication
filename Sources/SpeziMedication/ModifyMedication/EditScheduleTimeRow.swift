@@ -10,21 +10,35 @@ import SwiftUI
 
 
 struct EditScheduleTimeRow: View {
-    @Binding private var time: ScheduledTime
-    @Binding private var times: [ScheduledTime]
-    
-    @FocusState private var dosageFieldIsFocused: Bool
-    
-    
-    private let numberOfDosageFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
         return formatter
     }()
-    
-    
+
+    @Binding private var time: ScheduledTime
+    @Binding private var times: [ScheduledTime]
+    @State private var isEditingTime = false
+
+
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            Button(
+                action: {
+                    isEditingTime = true
+                },
+                label: {
+                    Text(Self.timeFormatter.string(from: time.date))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(Capsule())
+                }
+            )
+                .buttonStyle(.plain)
+
+            Spacer(minLength: 0)
+
             Button(
                 action: {
                     times.removeAll(where: { $0.id == time.id })
@@ -36,39 +50,43 @@ struct EditScheduleTimeRow: View {
                 }
             )
                 .buttonStyle(.borderless)
-            ScheduledTimeDatePicker(
-                date: $time.date.animation(),
-                excludedDates: times.map(\.date)
-            )
-                .frame(width: 100)
-            Spacer()
-            TextField(
-                String(localized: "Quantity", bundle: .module),
-                value: $time.dosage,
-                formatter: numberOfDosageFormatter
-            )
-                .focused($dosageFieldIsFocused)
-                .textFieldStyle(.roundedBorder)
-                .keyboardType(.decimalPad)
-                .frame(maxWidth: 90)
         }
-            .background {
-                Color.clear
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        dosageFieldIsFocused = false
-                    }
-                    .padding(-32)
+        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+        .onChange(of: time.date) {
+            withAnimation {
+                times.sort()
             }
-            .onChange(of: time.date) {
-                withAnimation {
-                    times.sort()
+        }
+        .sheet(isPresented: $isEditingTime) {
+            NavigationStack {
+                VStack {
+                    ScheduledTimeDatePicker(
+                        date: $time.date.animation(),
+                        excludedDates: times.map(\.date),
+                        preferredDatePickerStyle: .wheels
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 216)
+                }
+                .navigationTitle(Text("Select Time", bundle: .module))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(
+                            action: {
+                                isEditingTime = false
+                            },
+                            label: {
+                                Text("Done", bundle: .module)
+                            }
+                        )
+                    }
                 }
             }
+            .presentationDetents([.height(320)])
+        }
     }
-    
-    
+
+
     init(time: Binding<ScheduledTime>, times: Binding<[ScheduledTime]>) {
         self._time = time
         self._times = times

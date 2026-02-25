@@ -15,6 +15,7 @@ class InternalMedicationSettingsViewModel<MI: MedicationInstance> {
     let medicationOptions: Set<MI.InstanceType>
     let createMedicationInstance: AddMedication<MI>.CreateMedicationInstance
     private var quantityDosageCache: [AnyHashable: [Int: Double]] = [:]
+    private var quantityCache: [AnyHashable: Double] = [:]
 
 
     init(
@@ -44,6 +45,18 @@ class InternalMedicationSettingsViewModel<MI: MedicationInstance> {
 
     func clearQuantityDosageValues(for medicationID: AnyHashable) {
         quantityDosageCache.removeValue(forKey: medicationID)
+    }
+
+    func quantity(for medicationID: AnyHashable) -> Double? {
+        quantityCache[medicationID]
+    }
+
+    func setQuantity(_ value: Double, for medicationID: AnyHashable) {
+        quantityCache[medicationID] = value
+    }
+
+    func clearQuantity(for medicationID: AnyHashable) {
+        quantityCache.removeValue(forKey: medicationID)
     }
 }
 

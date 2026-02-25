@@ -16,21 +16,21 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
     private let allowEmptySave: Bool
     private let medicationSettingsViewModel: any MedicationSettingsViewModel<MI>
     private let action: () -> Void
-        
+
     @State private var cancelAlert = false
     @State private var showAddMedicationSheet = false
     @State private var viewState: ViewState = .idle
     private var viewModel: InternalMedicationSettingsViewModel<MI>
-    
-    
+
+
     private var modifiedMedications: Bool {
         medicationSettingsViewModel.medicationInstances.sorted() != viewModel.medicationInstances
     }
-    
+
     private var medicationOptions: Set<MI.InstanceType> {
         medicationOptions(medicationSettingsViewModel)
     }
-    
+
     private var cancelButtonTitie: String {
         if modifiedMedications {
             String(localized: "Cancel", bundle: .module)
@@ -38,7 +38,7 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
             String(localized: "Close", bundle: .module)
         }
     }
-    
+
     public var body: some View {
         VStack(spacing: 0) {
             if viewModel.medicationInstances.isEmpty {
@@ -98,7 +98,7 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
             .interactiveDismissDisabled(isPresented == nil || modifiedMedications)
             .environment(viewModel)
     }
-    
+
     @MainActor private var saveMedicationButton: some View {
         let title: String
         if viewModel.medicationInstances.isEmpty, !modifiedMedications && allowEmptySave {
@@ -106,7 +106,7 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
         } else {
             title = String(localized: "Save Medications", bundle: .module)
         }
-        
+
         return AsyncButton(
             action: {
                 do {
@@ -121,6 +121,15 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
                                 mutableMedicationInstance = typedMedicationInstance
                             }
                         }
+
+                        if let quantityValue = viewModel.quantity(for: AnyHashable(medicationInstance.id)),
+                           var quantityWritableMedicationInstance = mutableMedicationInstance as? any QuantityWritableMedicationInstance {
+                            quantityWritableMedicationInstance.quantity = quantityValue
+                            if let typedMedicationInstance = quantityWritableMedicationInstance as? MI {
+                                mutableMedicationInstance = typedMedicationInstance
+                            }
+                        }
+
                         return mutableMedicationInstance
                     }
 
@@ -149,7 +158,7 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
                     .edgesIgnoringSafeArea([.horizontal, .bottom])
             }
     }
-    
+
     private var addMedicationButton: some View {
         Button {
             showAddMedicationSheet.toggle()
@@ -158,12 +167,12 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
                 .accessibilityLabel(String(localized: "Add New Medication", bundle: .module))
         }
     }
-    
+
     private var addMedicationView: some View {
         AddMedication<MI>(isPresented: $showAddMedicationSheet)
     }
-    
-    
+
+
     /// Initializes a new ``MedicationSettings`` view.
     /// - Parameters:
     ///   - isPresented: An optional binding to allow the ``MedicationSettings`` view to control the presentation of itself, should be used in combination with e.g. a `.sheet(isPresented:)` modifier.
@@ -183,17 +192,17 @@ public struct MedicationSettings<MI: MedicationInstance>: View {
         self.action = action
         self.viewModel = medicationSettingsViewModel.internalViewModel
     }
-    
-    
+
+
     private func discardChangesAction() {
         viewModel.medicationInstances = medicationSettingsViewModel.medicationInstances.sorted()
         isPresented?.wrappedValue = false
     }
-    
+
     private func medicationOptions(_ viewModel: some MedicationSettingsViewModel<MI>) -> Set<MI.InstanceType> {
         viewModel.medicationOptions
     }
-    
+
     private func createMedicationInstance(_ viewModel: some MedicationSettingsViewModel<MI>) -> (MI.InstanceType, MI.InstanceDosage, Schedule) -> MI {
         viewModel.createMedicationInstance
     }

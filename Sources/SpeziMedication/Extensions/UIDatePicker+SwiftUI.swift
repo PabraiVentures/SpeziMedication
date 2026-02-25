@@ -32,6 +32,7 @@ struct ScheduledTimeDatePicker: UIViewRepresentable {
             }
             
             lastDate = datePicker.date
+            self.date.wrappedValue = datePicker.date
         }
         
         @objc
@@ -46,11 +47,17 @@ struct ScheduledTimeDatePicker: UIViewRepresentable {
     
     @Binding private var date: Date
     private let excludedDates: [Date]
+    private let preferredDatePickerStyle: UIDatePickerStyle
     
     
-    init(date: Binding<Date>, excludedDates: [Date]) {
+    init(
+        date: Binding<Date>,
+        excludedDates: [Date],
+        preferredDatePickerStyle: UIDatePickerStyle = .compact
+    ) {
         self._date = date
         self.excludedDates = excludedDates
+        self.preferredDatePickerStyle = preferredDatePickerStyle
     }
     
     
@@ -61,7 +68,7 @@ struct ScheduledTimeDatePicker: UIViewRepresentable {
     func makeUIView(context: Context) -> UIDatePicker {
         let datePicker = UIDatePicker()
         datePicker.datePickerMode = .time
-        datePicker.preferredDatePickerStyle = .compact
+        datePicker.preferredDatePickerStyle = preferredDatePickerStyle
         datePicker.minuteInterval = Self.minuteInterval
         datePicker.addTarget(context.coordinator, action: #selector(Coordinator.valueChanged), for: .valueChanged)
         datePicker.addTarget(context.coordinator, action: #selector(Coordinator.editingDidEnd), for: .editingDidEnd)
