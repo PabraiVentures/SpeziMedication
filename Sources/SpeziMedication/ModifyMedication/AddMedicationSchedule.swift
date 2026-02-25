@@ -34,7 +34,8 @@ struct AddMedicationSchedule<MI: MedicationInstance>: View {
                 EditFrequency(
                     frequency: $frequency,
                     startDate: $startDate,
-                    endDate: supportsEndDate ? $endDate : nil
+                    endDate: supportsEndDate ? $endDate : nil,
+                    hideRegularIntervalPicker: supportsNewQuantityDosageFlow
                 )
                 EditScheduleTime(times: $times)
             }
@@ -106,6 +107,18 @@ struct AddMedicationSchedule<MI: MedicationInstance>: View {
 
     private var supportsEndDate: Bool {
         MI.self is EndDateWritableMedicationInstance.Type
+    }
+
+    private var supportsExplicitQuantity: Bool {
+        MI.self is QuantityWritableMedicationInstance.Type
+    }
+
+    private var supportsQuantityDosage: Bool {
+        medicationOption.dosages.allSatisfy { $0 is any QuantityDosage }
+    }
+
+    private var supportsNewQuantityDosageFlow: Bool {
+        supportsExplicitQuantity && supportsQuantityDosage
     }
 
     private var titleSection: some View {

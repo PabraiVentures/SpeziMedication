@@ -71,7 +71,8 @@ struct EditMedication<MI: MedicationInstance>: View {
                     EditFrequency(
                         frequency: $medicationInstance.schedule.frequency,
                         startDate: $medicationInstance.schedule.startDate,
-                        endDate: supportsEndDate ? $editableEndDate : nil
+                        endDate: supportsEndDate ? $editableEndDate : nil,
+                        hideRegularIntervalPicker: supportsNewQuantityDosageFlow
                     )
                 }
                 Section(String(localized: "Schedule Times", bundle: .module)) {

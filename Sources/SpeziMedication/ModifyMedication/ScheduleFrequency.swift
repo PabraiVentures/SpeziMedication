@@ -16,6 +16,7 @@ struct ScheduleFrequencyView: View {
     @Binding private var startDate: Date
     @Binding private var endDate: Date?
     private let supportsEndDate: Bool
+    private let hideRegularIntervalPicker: Bool
 
     @State private var frequency: Frequency
     @State private var regularInterval: Int = 1
@@ -37,7 +38,7 @@ struct ScheduleFrequencyView: View {
                         .pickerStyle(.inline)
                         .labelsHidden()
                 }
-                if case .regularDayIntervals = frequency {
+                if case .regularDayIntervals = frequency, !hideRegularIntervalPicker {
                     regularDayIntervalsSection
                 }
                 if case .specificDaysOfWeek = frequency {
@@ -168,12 +169,14 @@ struct ScheduleFrequencyView: View {
         frequency: Binding<Frequency>,
         startDate: Binding<Date>,
         endDate: Binding<Date?>,
-        supportsEndDate: Bool
+        supportsEndDate: Bool,
+        hideRegularIntervalPicker: Bool
     ) {
         self._outsideFrequency = frequency
         self._startDate = startDate
         self._endDate = endDate
         self.supportsEndDate = supportsEndDate
+        self.hideRegularIntervalPicker = hideRegularIntervalPicker
         self._frequency = State(wrappedValue: frequency.wrappedValue)
 
         switch frequency.wrappedValue {
@@ -229,6 +232,7 @@ struct ScheduleFrequencyView: View {
         frequency: $frequency,
         startDate: $startDate,
         endDate: $endDate,
-        supportsEndDate: true
+        supportsEndDate: true,
+        hideRegularIntervalPicker: false
     )
 }

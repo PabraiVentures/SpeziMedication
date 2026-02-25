@@ -14,6 +14,7 @@ struct EditFrequency: View {
     @Binding private var startDate: Date
     @Binding private var endDate: Date?
     private let supportsEndDate: Bool
+    private let hideRegularIntervalPicker: Bool
     @State private var showFrequencySheet = false
 
 
@@ -39,15 +40,22 @@ struct EditFrequency: View {
                     frequency: $frequency,
                     startDate: $startDate,
                     endDate: $endDate,
-                    supportsEndDate: supportsEndDate
+                    supportsEndDate: supportsEndDate,
+                    hideRegularIntervalPicker: hideRegularIntervalPicker
                 )
             }
     }
 
 
-    init(frequency: Binding<Frequency>, startDate: Binding<Date>, endDate: Binding<Date?>? = nil) {
+    init(
+        frequency: Binding<Frequency>,
+        startDate: Binding<Date>,
+        endDate: Binding<Date?>? = nil,
+        hideRegularIntervalPicker: Bool = false
+    ) {
         self._frequency = frequency
         self._startDate = startDate
+        self.hideRegularIntervalPicker = hideRegularIntervalPicker
         if let endDate {
             self._endDate = endDate
             self.supportsEndDate = true
